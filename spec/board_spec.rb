@@ -23,7 +23,7 @@ RSpec.describe Board do
     it "sets a cell with its correct value" do
       @board.update_value(8,2,1)
       expect(@board.board[8][2].value).to eq(1)
-      expect(@board.board[8][4]).to eq(false)
+      expect(@board.board[8][4].cell[0]).to eq(false)
     end
   end
   describe "#update!" do

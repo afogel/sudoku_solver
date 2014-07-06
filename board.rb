@@ -10,14 +10,24 @@ class Board
 
   # return an array of possible number
   def get_possibilities(row, col)
-    possibilities = get_row(row) + get_column(col) + get_box(row,col)
+    possibilities = get_row_values(row) + get_column_values(col) + get_box_values(row,col)
     (1..9).to_a - possibilities.uniq
   end
 
   # update the value in that cell, then for every cell in that row, column,
   # and box we will update the possibilities for those cells
   def update_value(row, col, answer)
+    @board[row][col].value = answer
+    update_layer(row, col, answer)
   end
+
+  def update_layer(row, col, answer)
+    update_cell = proc {|cell| cell.eliminate_possibility(answer) if cell.value.nil?}
+    get_row_cells(row).each(&update_cell)
+    get_col_cells(col).each(&update_cell)
+    get_box_cells(row,col).each(&update_cell)
+  end
+
 
   # after each iteration, call Cell#update! for all cells
   def update!
@@ -60,18 +70,16 @@ class Board
     char_index % 9
   end
 
-  # given the coordinates of a cell, get all cells in that row
-  def get_row(row_coord)
-    @board[row_coord].map(&:value)
+#
+  def get_row_cells(row_coord)
+    @board[row_coord]
   end
 
-  # given the coordinates of a cell, get all cells in that column
-  def get_column(col_coord)
-    @board.map { |row| row[col_coord].value }
+  def get_col_cells(col_coord)
+    @board.map { |row| row[col_coord] }
   end
 
-  # given the coordinates of a cell, get all cells in that box
-  def get_box(row_coord, col_coord)
+  def get_box_cells(row_coord, col_coord)
     top_left_row, top_left_col = get_top_left_cell(row_coord, col_coord)
     box_values = []
     3.times do |i|
@@ -85,6 +93,22 @@ class Board
   # calculate the top left coordinates for a box
   def get_top_left_cell(row_coord, col_coord)
     [(row_coord/3)*3,(col_coord/3)*3]
+  end
+
+# Methods to map values to blocks of cells
+  # given the coordinates of a cell, get all cells in that row
+  def get_row_values(row_coord)
+    get_row_cells(row_coord).map(&:value)
+  end
+
+  # given the coordinates of a cell, get all cells in that column
+  def get_column_values(col_coord)
+    get_col_cells(col_coord).map(&:value)
+  end
+
+  # given the coordinates of a cell, get all cells in that box
+  def get_box_values(row_coord, col_coord)
+    get_box_cells(row_coord,col_coord).map(&:value)
   end
 
 end
