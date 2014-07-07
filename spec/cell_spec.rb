@@ -7,7 +7,7 @@ RSpec.describe Cell do
       array = [nil,nil,nil,false,nil,nil,nil,nil,nil]
       cell = Cell.new
       cell.eliminate_possibility(4)
-      expect(cell.cell).to eq(array)
+      expect(cell.layers).to eq(array)
     end
   end
 
@@ -16,7 +16,7 @@ RSpec.describe Cell do
       array = [false,false,false,true,false,false,false,false,false]
       cell = Cell.new
       cell.value = 4
-      expect(cell.cell).to eq(array)
+      expect(cell.layers).to eq(array)
     end
   end
 

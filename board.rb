@@ -10,7 +10,7 @@ class Board
 
   # return an array of possible number
   def get_possibilities(row, col)
-    possibilities = get_row_values(row) + get_column_values(col) + get_box_values(row,col)
+    possibilities = get_row_values(row) + get_col_values(col) + get_box_values(row,col)
     (1..9).to_a - possibilities.uniq
   end
 
@@ -22,7 +22,7 @@ class Board
   end
 
   def update_layer(row, col, answer)
-    update_cell = proc {|cell| cell.eliminate_possibility(answer) if cell.value.nil?}
+    update_cell = proc {|cell| cell.eliminate_possibility(answer)}
     get_row_cells(row).each(&update_cell)
     get_col_cells(col).each(&update_cell)
     get_box_cells(row,col).each(&update_cell)
@@ -31,7 +31,11 @@ class Board
 
   # after each iteration, call Cell#update! for all cells
   def update!
+    update_segment("row")
+    update_segment("col")
+    update_boxes
   end
+
 
   # print board string
   def to_s
@@ -46,7 +50,6 @@ class Board
   end
 
   private
-
   def make_board
     9.times do |i|
       @board[i] = Array.new(9, nil)
@@ -58,9 +61,56 @@ class Board
   # internal board model
   def load_hints(board_string)
     board_string.each_char.with_index do |char, idx|
-      @board[row_index(idx)][col_index(idx)].value = char.to_i unless char.to_i.zero?
+      update_value(row_index(idx),col_index(idx), char.to_i) unless char.to_i.zero?
     end
   end
+
+  def update_boxes
+    (0..8).step(3) do |row_index|
+      (0..8).step(3) do |col_index|
+        values_replaced = 1
+        while values_replaced > 0
+          values_replaced = 0
+          unsolved_values = ( 1..9).to_a - get_box_values(row_index, col_index)
+          unsolved_values.each do |unsolved_value|
+            layer = get_layer(get_box_cells(row_index, col_index), unsolved_value)
+            if layer.count(nil) == 1
+              layer_index = layer.index(nil)
+              cell_row_index = row_index + (layer_index / 3)
+              cell_col_index = col_index + (layer_index % 3)
+              values_replaced += 1
+              update_value(cell_row_index, cell_col_index, unsolved_value)
+            end
+          end
+        end
+      end
+    end
+  end
+
+  def update_segment(segment)
+    9.times do |segment_idx|
+      values_replaced = 1
+      while values_replaced > 0
+        values_replaced = 0
+        unsolved_values = (1..9).to_a - send("get_#{segment}_values".to_sym, segment_idx)
+        unsolved_values.each do |unsolved_value|
+          layer = get_layer(send("get_#{segment}_cells".to_sym,segment_idx), unsolved_value)
+          if layer.count(nil) == 1
+            values_replaced += 1
+            case segment
+            when "row" then update_value(segment_idx,layer.index(nil),unsolved_value)
+            when "col" then update_value(layer.index(nil), segment_idx, unsolved_value)
+            end
+          end
+        end
+      end
+    end
+  end
+
+  def get_layer(cells, value)
+    cells.map { |cell| cell.layers[value-1] }
+  end
+
 
   def row_index(char_index)
     char_index / 9
@@ -102,7 +152,7 @@ class Board
   end
 
   # given the coordinates of a cell, get all cells in that column
-  def get_column_values(col_coord)
+  def get_col_values(col_coord)
     get_col_cells(col_coord).map(&:value)
   end
 

@@ -1,23 +1,23 @@
 class Cell
-  attr_reader :cell
+  attr_reader :layers
   def initialize
-    @cell = Array.new(9, nil)
+    @layers = Array.new(9, nil)
   end
 
   def eliminate_possibility(value)
-    @cell[value-1] = false
+    @layers[value-1] = false if @layers.index(true).nil?
   end
 
   def value=(number)
-    @cell.map!.with_index{|el,idx| idx == number-1}
+    @layers.map!.with_index{|el,idx| idx == number-1}
   end
 
   # will return nil if no true elements in the cell array
   def value
-    @cell.index(true)+1 if !@cell.include?(nil)
+    @layers.index(true)+1 if !@layers.include?(nil)
   end
 
   def update!
-    @cell[@cell.index(nil)] = true if @cell.count(nil) == 1
+    @layers[@layers.index(nil)] = true if @layers.count(nil) == 1
   end
 end
